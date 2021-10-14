@@ -1,2 +1,2 @@
 # geojson-editor
-Geojson editor node.js application.
+GeoJSON editor node.js application.
