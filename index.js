@@ -10,15 +10,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const text = document.querySelector("#jsonTextarea");
 var myLayer = L.geoJSON().addTo(map);
 
+var json;
 function update(str) {
-    myLayer.clearLayers();
-    myLayer.addData(JSON.parse(str));
+    try {
+        json = JSON.parse(str);
+        myLayer.clearLayers();
+        myLayer.addData(json);
+    } catch (error) { }
 }
 
 function updateValue(e) {
     update(e.srcElement.value);
 }
-text.addEventListener('change', updateValue);
+text.addEventListener('input', updateValue);
 update(text.value);
 
 // Copy to clipboard
