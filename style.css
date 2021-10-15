@@ -8,6 +8,12 @@ body {
     display: none !important;
 }
 
+.collapsing {
+    -webkit-transition: none;
+    transition: none;
+    display: none;
+}
+
 #jsonTextarea {
     resize: none;
     background-color: #1e1e1e;
