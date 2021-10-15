@@ -26,3 +26,18 @@ document.querySelector("#copy").addEventListener("click", function () {
     text.select();
     document.execCommand("copy");
 });
+
+// Add control
+var info = L.control();
+
+info.onAdd = function (map) {
+    this._div = L.DomUtil.create('div', 'info');
+    this.update();
+    return this._div;
+};
+
+info.update = function (props) {
+    this._div.innerHTML = '<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">JSON</button>';
+};
+
+info.addTo(map);
