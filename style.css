@@ -13,9 +13,3 @@ body {
     transition: none;
     display: none;
 }
-
-#jsonTextarea {
-    resize: none;
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-}
