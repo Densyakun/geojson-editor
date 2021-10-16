@@ -15,7 +15,7 @@
   <title>GeoJSON Editor</title>
 </head>
 
-<body class="d-flex bg-dark">
+<body class="d-flex bg-dark text-white">
   <div class="flex-fill d-flex flex-column">
     <nav class="navbar navbar-dark">
       <div class="container-fluid">
@@ -31,7 +31,21 @@
     </nav>
     <div class="flex-grow-1" id="map"></div>
   </div>
-  <div class="collapse flex-fill min-vw-100" id="collapseJson"></div>
+  <div id="collapseJson" class="collapse flex-fill min-vw-100 d-flex flex-column">
+    <nav class="navbar navbar-dark">
+      <div class="container-fluid">
+        <span class="fs-5 me-3">JSON</span>
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <input type="file" id="fileElem" multiple accept="application/geo+json, .geojson, application/json, .json"
+              style="display: none;" multiple>
+            <button id="fileSelect" class="btn btn-primary">Upload</button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="flex-grow-1" id="editor"></div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.min.js"
     integrity="sha384-pQQkAEnwaBkjpqZ8RU1fF1AKtTcHJwFl3pblpTlHXybJjHpMYo79HY3hIi4NKxyj"
