@@ -5,6 +5,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
+map.attributionControl.setPosition('bottomleft');
+map.zoomControl.setPosition('bottomright');
+
 
 // JSON
 var myLayer = L.geoJSON().addTo(map);
@@ -50,6 +53,7 @@ update(editor.getValue());
 
 // Add control
 var info = L.control();
+info.setPosition('bottomright');
 
 info.onAdd = function (map) {
     this._div = L.DomUtil.create('div', 'info');
