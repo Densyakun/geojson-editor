@@ -121,3 +121,8 @@ function drop(e) {
 
   handleFiles(files);
 }
+
+// File Download
+function handleDownload() {
+  document.getElementById("download").href = window.URL.createObjectURL(new Blob([editor.getValue()], { "type": "application/geo+json" }));
+}

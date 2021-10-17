@@ -35,11 +35,14 @@
     <nav class="navbar navbar-dark">
       <div class="container-fluid">
         <span class="fs-5 me-3">JSON</span>
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item">
+        <ul class="nav me-auto">
+          <li class="nav-item pe-2">
             <input type="file" id="fileElem" multiple accept="application/geo+json, .geojson, application/json, .json"
               style="display: none;" multiple>
             <button id="fileSelect" class="btn btn-primary">Upload</button>
+          </li>
+          <li class="nav-item pe-2">
+            <a id="download" class="btn btn-primary" download=".geojson" onclick="handleDownload()">Download</a>
           </li>
         </ul>
       </div>
