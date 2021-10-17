@@ -1,5 +1,6 @@
 // Map init
 var map = L.map('map', {
+  zoomSnap: 0.0001,
   preferCanvas: true
 }).fitWorld();
 
@@ -8,6 +9,26 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 map.attributionControl.setPosition('bottomleft');
+
+L.control.scale().addTo(map);
+
+var ZoomViewer = L.Control.extend({
+  onAdd: function () {
+    var gauge = L.DomUtil.create('div');
+    gauge.style.background = 'rgba(255,255,255,0.5)';
+    gauge.style.textAlign = 'left';
+    function show() {
+      gauge.innerHTML = 'Zoom level: ' + map.getZoom().toFixed(4);
+    }
+    map.on('zoomstart zoom zoomend', function (ev) {
+      show();
+    })
+    show();
+    return gauge;
+  }
+});
+
+(new ZoomViewer).addTo(map).setPosition('bottomright');
 map.zoomControl.setPosition('bottomright');
 
 
