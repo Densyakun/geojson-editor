@@ -81,14 +81,15 @@ const fileSelect = document.getElementById("fileSelect"),
   fileElem = document.getElementById("fileElem");
 
 fileSelect.addEventListener("click", function (e) {
-  if (fileElem) {
+  if (fileElem)
     fileElem.click();
-  }
 }, false);
 
-fileElem.addEventListener("change", handleFiles, false);
-function handleFiles() {
-  const files = fileElem.files;
+fileElem.addEventListener("change", function (e) {
+  handleFiles(fileElem.files);
+}, false);
+
+function handleFiles(files) {
   if (files.length !== 0) {
     for (const file of files) {
       const reader = new FileReader();
@@ -99,4 +100,24 @@ function handleFiles() {
       reader.readAsText(file);
     }
   }
+}
+
+// Drag and drop
+document.addEventListener("dragenter", drag, false);
+document.addEventListener("dragover", drag, false);
+document.addEventListener("drop", drop, false);
+
+function drag(e) {
+  e.stopPropagation();
+  e.preventDefault();
+}
+
+function drop(e) {
+  e.stopPropagation();
+  e.preventDefault();
+
+  const dt = e.dataTransfer;
+  const files = dt.files;
+
+  handleFiles(files);
 }
