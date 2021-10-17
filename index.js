@@ -28,7 +28,7 @@ var ZoomViewer = L.Control.extend({
   }
 });
 
-(new ZoomViewer).addTo(map).setPosition('bottomright');
+new ZoomViewer({ position: 'bottomright' }).addTo(map);
 map.zoomControl.setPosition('bottomright');
 
 
