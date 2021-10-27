@@ -63,6 +63,9 @@ const map = new ol.Map({
     attribution,
     new ol.control.ScaleLine(),
     new InfoControl(),
+    new ol.control.FullScreen({
+      source: 'fullscreen',
+    }),
     new ZoomControl(),
     new JsonControl(),
   ]),
