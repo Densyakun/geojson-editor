@@ -1,46 +1,194 @@
 // Map init
-var map = L.map('map', {
-  zoomSnap: 0.0001,
-  preferCanvas: true
-}).fitWorld();
+const attribution = new ol.control.Attribution({
+  collapsible: false
+});
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+const vectorLayer = new ol.layer.VectorTile();
 
-map.attributionControl.setPosition('bottomleft');
+class InfoControl extends ol.control.Control {
+  constructor(opt_options) {
+    const options = opt_options || {};
 
-L.control.scale().addTo(map);
+    const element = document.createElement('div');
+    element.id = 'info';
+    element.className = 'ol-unselectable ol-control';
 
-var ZoomViewer = L.Control.extend({
-  onAdd: function () {
-    var gauge = L.DomUtil.create('div');
-    gauge.style.background = 'rgba(255,255,255,0.5)';
-    gauge.style.textAlign = 'left';
-    function show() {
-      gauge.innerHTML = 'Zoom level: ' + map.getZoom().toFixed(4);
-    }
-    map.on('zoomstart zoom zoomend', function (ev) {
-      show();
-    })
-    show();
-    return gauge;
+    super({
+      element: element,
+      target: options.target,
+    });
+  }
+}
+
+class ZoomControl extends ol.control.Control {
+  constructor(opt_options) {
+    const options = opt_options || {};
+
+    const element = document.createElement('div');
+    element.id = 'zoom-info';
+    element.className = 'ol-unselectable ol-control';
+
+    super({
+      element: element,
+      target: options.target,
+    });
+  }
+}
+
+class JsonControl extends ol.control.Control {
+  constructor(opt_options) {
+    const options = opt_options || {};
+
+    const button = document.createElement('button');
+    button.setAttribute('type', 'button');
+    button.setAttribute('data-bs-toggle', 'collapse');
+    button.setAttribute('data-bs-target', '#collapseJson');
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-controls', 'collapseJson');
+    button.innerHTML = 'JSON';
+
+    const element = document.createElement('div');
+    element.className = 'json-button ol-unselectable ol-control';
+    element.appendChild(button);
+
+    super({
+      element: element,
+      target: options.target,
+    });
+  }
+}
+
+const map = new ol.Map({
+  controls: ol.control.defaults({ attribution: false }).extend([
+    attribution,
+    new ol.control.ScaleLine(),
+    new InfoControl(),
+    new ZoomControl(),
+    new JsonControl(),
+  ]),
+  interactions: ol.interaction.defaults().extend([new ol.interaction.DragRotateAndZoom()]),
+  layers: [
+    new ol.layer.Tile({
+      source: new ol.source.OSM()
+    }),
+    vectorLayer,
+  ],
+  target: 'map',
+  view: new ol.View({
+    center: [0.0, 0.0],
+    zoom: 0,
+  })
+});
+
+function checkSize() {
+  const small = map.getSize()[0] < 600;
+  attribution.setCollapsible(small);
+  attribution.setCollapsed(small);
+}
+
+window.addEventListener('resize', checkSize);
+checkSize();
+
+function showZoom() {
+  document.getElementById('zoom-info').innerHTML = 'Zoom level: ' + map.getView().getZoom().toFixed(4);
+}
+showZoom();
+
+var currZoom = map.getView().getZoom();
+map.on('moveend', function (e) {
+  var newZoom = map.getView().getZoom();
+  if (currZoom != newZoom) {
+    showZoom(newZoom);
+    currZoom = newZoom;
   }
 });
 
-new ZoomViewer({ position: 'bottomright' }).addTo(map);
-map.zoomControl.setPosition('bottomright');
-
 
 // JSON
-var myLayer = L.geoJSON().addTo(map);
+const replacer = function (key, value) {
+  if (value.geometry) {
+    let type;
+    const rawType = value.type;
+    let geometry = value.geometry;
+
+    if (rawType === 1) {
+      type = 'MultiPoint';
+      if (geometry.length == 1) {
+        type = 'Point';
+        geometry = geometry[0];
+      }
+    } else if (rawType === 2) {
+      type = 'MultiLineString';
+      if (geometry.length == 1) {
+        type = 'LineString';
+        geometry = geometry[0];
+      }
+    } else if (rawType === 3) {
+      type = 'Polygon';
+      if (geometry.length > 1) {
+        type = 'MultiPolygon';
+        geometry = [geometry];
+      }
+    }
+
+    return {
+      'type': 'Feature',
+      'geometry': {
+        'type': type,
+        'coordinates': geometry,
+      },
+      'properties': value.tags,
+    };
+  } else {
+    return value;
+  }
+};
 
 var json;
 function update(str) {
   try {
     json = JSON.parse(str);
-    myLayer.clearLayers();
-    myLayer.addData(json);
+    vectorLayer.setSource(null);
+
+    const tileIndex = geojsonvt(json, {
+      maxZoom: 24,
+      extent: 4096,
+      debug: 1,
+    });
+    const format = new ol.format.GeoJSON({
+      dataProjection: new ol.proj.Projection({
+        code: 'TILE_PIXELS',
+        units: 'tile-pixels',
+        extent: [0, 0, 4096, 4096],
+      }),
+    });
+    const vectorSource = new ol.source.VectorTile({
+      tileUrlFunction: function (tileCoord) {
+        return JSON.stringify(tileCoord);
+      },
+      tileLoadFunction: function (tile, url) {
+        const tileCoord = JSON.parse(url);
+        const data = tileIndex.getTile(
+          tileCoord[0],
+          tileCoord[1],
+          tileCoord[2]
+        );
+        const geojson = JSON.stringify(
+          {
+            type: 'FeatureCollection',
+            features: data ? data.features : [],
+          },
+          replacer
+        );
+        const features = format.readFeatures(geojson, {
+          extent: vectorSource.getTileGrid().getTileCoordExtent(tileCoord),
+          featureProjection: map.getView().getProjection(),
+        });
+        tile.setFeatures(features);
+      },
+    });
+
+    vectorLayer.setSource(vectorSource);
   } catch (error) { }
 }
 
@@ -74,24 +222,9 @@ editor.session.on('change', function (delta) {
 });
 update(editor.getValue());
 
-// Add control
-var info = L.control();
-info.setPosition('bottomright');
-
-info.onAdd = function (map) {
-  this._div = L.DomUtil.create('div', 'info');
-  this.update();
-  return this._div;
-};
-
-info.update = function (props) {
-  this._div.innerHTML = '<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseJson" aria-expanded="false" aria-controls="collapseJson">JSON</button>';
-};
-
-info.addTo(map);
-
 function resize() {
-  map.invalidateSize();
+  map.updateSize();
+  checkSize();
   editor.resize();
 }
 document.getElementById('collapseJson').addEventListener('shown.bs.collapse', resize);
@@ -116,6 +249,12 @@ function handleFiles(files) {
       const reader = new FileReader();
       reader.onload = () => {
         editor.setValue(reader.result);
+
+        map.getView().fit(new ol.source.Vector({
+          features: new ol.format.GeoJSON().readFeatures(editor.getValue(), {
+            featureProjection: map.getView().getProjection(),
+          }),
+        }).getExtent());
       };
 
       reader.readAsText(file);
@@ -147,3 +286,33 @@ function drop(e) {
 function handleDownload() {
   document.getElementById("download").href = window.URL.createObjectURL(new Blob([editor.getValue()], { "type": "application/geo+json" }));
 }
+
+// displayFeatureInfo
+const displayFeatureInfo = function (pixel) {
+  const features = [];
+  map.forEachFeatureAtPixel(pixel, function (feature) {
+    features.push(feature);
+  });
+  if (features.length > 0) {
+    const info = [];
+    let i, ii;
+    for (i = 0, ii = features.length; i < ii; ++i) {
+      info.push(features[i].get('name'));
+    }
+    document.getElementById('info').innerHTML = info.join(', ') || '&nbsp';
+  } else {
+    document.getElementById('info').innerHTML = '&nbsp;';
+  }
+};
+
+map.on('pointermove', function (evt) {
+  if (evt.dragging) {
+    return;
+  }
+  const pixel = map.getEventPixel(evt.originalEvent);
+  displayFeatureInfo(pixel);
+});
+
+map.on('click', function (evt) {
+  displayFeatureInfo(evt.pixel);
+});

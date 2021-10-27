@@ -13,3 +13,23 @@ body {
     transition: none;
     display: none;
 }
+
+.ol-zoom {
+    top: initial;
+    left: initial;
+    bottom: 32px;
+    right: .5em;
+}
+
+.json-button {
+    bottom: 91px;
+    right: .5em;
+}
+
+#zoom-info {
+    bottom: 38px;
+}
+
+#info {
+    bottom: 74px;
+}
