@@ -21,8 +21,13 @@ body {
     right: .5em;
 }
 
-.json-button {
+.fit-button {
     bottom: 91px;
+    right: .5em;
+}
+
+.json-button {
+    bottom: 127px;
     right: .5em;
 }
 

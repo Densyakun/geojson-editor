@@ -35,6 +35,35 @@ class ZoomControl extends ol.control.Control {
   }
 }
 
+class FitControl extends ol.control.Control {
+  constructor(opt_options) {
+    const options = opt_options || {};
+
+    const button = document.createElement('button');
+    button.setAttribute('type', 'button');
+    button.innerHTML = 'Fit';
+
+    const element = document.createElement('div');
+    element.className = 'fit-button ol-unselectable ol-control';
+    element.appendChild(button);
+
+    super({
+      element: element,
+      target: options.target,
+    });
+
+    button.addEventListener('click', this.handle.bind(this), false);
+  }
+
+  handle() {
+    this.getMap().getView().fit(new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(editor.getValue(), {
+        featureProjection: map.getView().getProjection(),
+      }),
+    }).getExtent());
+  }
+}
+
 class JsonControl extends ol.control.Control {
   constructor(opt_options) {
     const options = opt_options || {};
@@ -67,6 +96,7 @@ const map = new ol.Map({
       source: 'fullscreen',
     }),
     new ZoomControl(),
+    new FitControl(),
     new JsonControl(),
   ]),
   interactions: ol.interaction.defaults().extend([new ol.interaction.DragRotateAndZoom()]),
